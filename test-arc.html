@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<body style="background:#222; margin:0; overflow:hidden;">
+<div id="container" style="position:absolute; width:1100px; height:620px; border:1px solid red; top:50px; left:50px;">
+  <div id="arc" style="position:absolute; inset:0; transition: transform 0.5s;">
+  </div>
+</div>
+<script>
+  const arc = document.getElementById('arc');
+  const cx = 300;
+  const cy = 600;
+  const r = 500;
+  
+  const startAngle = -120;
+  const endAngle = -30;
+  const count = 10;
+  
+  for(let i=0; i<count; i++) {
+    const angle = startAngle + i/(count-1) * (endAngle - startAngle);
+    const rad = angle * Math.PI / 180;
+    const x = cx + r * Math.cos(rad);
+    const y = cy + r * Math.sin(rad);
+    
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.width = '20px';
+    div.style.height = '20px';
+    div.style.background = i === count - 1 ? 'blue' : 'gray';
+    div.style.borderRadius = '50%';
+    div.style.left = x + 'px';
+    div.style.top = y + 'px';
+    div.style.transform = 'translate(-50%, -50%)';
+    arc.appendChild(div);
+  }
+</script>
+</body>
+</html>

@@ -47,11 +47,11 @@ export function HistoryScreen({
 
   // Arch Trajectory Layout Dimensions (in 1100x620 canvas space)
   // Center is placed lower (y=520) so a grand wide arc sweeps across the canvas
-  const centerX = 0
-  const centerY = 0
-  const arcRadius = 600
-  const startAngle = -140
-  const endAngle = -50 // Right-most base of the expanded arc
+  const centerX = 300
+  const centerY = 600
+  const arcRadius = 500
+  const startAngle = -130
+  const endAngle = -30 // Right-most base of the expanded arc
 
   // Calculate position along upward arch with wide node spacing
   const totalSessions = sessions.length
@@ -228,8 +228,8 @@ export function HistoryScreen({
           <div
             className="absolute inset-0 transition-transform duration-500 ease-out"
             style={{
-              transform: `translate(calc(60% + ${panOffset.x}px), calc(75% + ${panOffset.y}px)) scale(${zoom}) translate(${-activePoint.x}px, ${-activePoint.y}px)`,
-              transformOrigin: `${activePoint.x}px ${activePoint.y}px`,
+              transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom}) rotate(${-30 - activePoint.angleDeg}deg)`,
+              transformOrigin: `${centerX}px ${centerY}px`,
             }}
           >
             {/* Session Nodes matching reference image circular pellets (No connecting lines) */}
@@ -241,7 +241,7 @@ export function HistoryScreen({
                 <div
                   key={pt.session.id}
                   className="absolute -translate-x-1/2 -translate-y-1/2 transition-transform duration-300"
-                  style={{ left: `${pt.x}px`, top: `${pt.y}px` }}
+                  style={{ left: `${pt.x}px`, top: `${pt.y}px`, transform: `translate(-50%, -50%) rotate(${30 + activePoint.angleDeg}deg)` }}
                 >
                   {/* Circular Node Emblem */}
                   <div className="relative flex items-center">
