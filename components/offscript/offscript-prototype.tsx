@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { Palette } from 'lucide-react'
 import { AppWindow, WindowStatus } from './app-window'
 import { Meta } from './primitives'
 import { MenuBarPopover } from './screens/menu-bar-popover'
@@ -11,6 +12,7 @@ import { LearningNoteScreen } from './screens/learning-note'
 import { HistoryScreen } from './screens/history'
 import { SettingsScreen } from './screens/settings'
 import { SpecSheetScreen } from './screens/spec-sheet'
+import { GLOBAL_THEMES, ThemeProvider, useTheme } from './theme-context'
 import { attempts, currentPractice, type AssistLevel } from '@/lib/offscript-data'
 import { cn } from '@/lib/utils'
 
@@ -55,7 +57,44 @@ const STATUS: Partial<Record<ScreenId, string>> = {
   spec: 'Reference',
 }
 
-export function OffscriptPrototype() {
+function GlobalThemePicker() {
+  const { theme, setTheme } = useTheme()
+  return (
+    <div className="mt-6 border-t border-hairline/60 pt-5">
+      <div className="flex items-center justify-between">
+        <Meta className="text-[9px]">Global Theme</Meta>
+        <Palette className="size-3 text-muted-foreground" aria-hidden="true" />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-1.5">
+        {GLOBAL_THEMES.map((t) => {
+          const active = theme === t.id
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTheme(t.id)}
+              title={`${t.label} (${t.cnLabel})`}
+              className={cn(
+                'flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-left transition-all text-[11px] font-medium border cursor-pointer',
+                active
+                  ? 'border-terracotta/50 bg-surface-raised text-foreground shadow-2xs font-semibold'
+                  : 'border-transparent text-muted-foreground hover:bg-surface-sunken/60 hover:text-foreground',
+              )}
+            >
+              <span
+                className="size-2.5 rounded-full border border-black/15 shrink-0 shadow-2xs"
+                style={{ backgroundColor: t.colorDot }}
+              />
+              <span className="truncate">{t.cnLabel}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function InnerPrototype() {
   const [screen, setScreen] = useState<ScreenId>('popover')
   const [attemptIndex, setAttemptIndex] = useState(0)
   const [assist, setAssist] = useState<AssistLevel>('none')
@@ -77,7 +116,7 @@ export function OffscriptPrototype() {
   }, [])
 
   return (
-    <main className="min-h-svh w-full overflow-auto bg-background">
+    <main className="min-h-svh w-full overflow-auto bg-background transition-colors duration-300">
       <div className="flex min-w-max items-start gap-10 px-12 py-14">
         {/* prototype index — not part of the macOS app */}
         <aside className="sticky top-14 w-[190px] shrink-0">
@@ -87,7 +126,9 @@ export function OffscriptPrototype() {
             backend.
           </p>
 
-          <nav className="mt-8 flex flex-col gap-1">
+          <GlobalThemePicker />
+
+          <nav className="mt-6 flex flex-col gap-1">
             {NAV.map((item) => {
               const active = screen === item.id
               return (
@@ -157,5 +198,13 @@ export function OffscriptPrototype() {
         )}
       </div>
     </main>
+  )
+}
+
+export function OffscriptPrototype() {
+  return (
+    <ThemeProvider>
+      <InnerPrototype />
+    </ThemeProvider>
   )
 }

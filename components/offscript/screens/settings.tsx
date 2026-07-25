@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertCircle, Check, Eye, EyeOff, KeyRound } from 'lucide-react'
+import { AlertCircle, Check, Eye, EyeOff, KeyRound, Palette } from 'lucide-react'
 import { Screen } from '../app-window'
 import { Hairline, Meta, Pebble, PillButton, ScreenHeader } from '../primitives'
+import { GLOBAL_THEMES, useTheme } from '../theme-context'
 import { cn } from '@/lib/utils'
 
 type KeyState = 'idle' | 'saved' | 'error'
@@ -12,6 +13,7 @@ export function SettingsScreen() {
   const [key, setKey] = useState('sk-proj-2f7c····································9ab1')
   const [reveal, setReveal] = useState(false)
   const [state, setState] = useState<KeyState>('saved')
+  const { theme, setTheme } = useTheme()
 
   return (
     <Screen>
@@ -20,6 +22,53 @@ export function SettingsScreen() {
       <div className="no-scrollbar mt-8 h-[624px] overflow-y-auto pr-2">
         <div className="grid grid-cols-[1fr_340px] gap-8">
           <div className="flex flex-col gap-8">
+            <Pebble className="p-8">
+              <div className="flex items-center gap-3">
+                <span className="grid size-8 place-items-center rounded-full bg-surface-sunken">
+                  <Palette className="size-4 text-terracotta" aria-hidden="true" />
+                </span>
+                <div>
+                  <Meta className="text-[10px]">Global Color Theme</Meta>
+                  <p className="mt-0.5 text-[13px] text-muted-foreground">
+                    Customize Offscript&apos;s interface palette across all views.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-3 gap-3">
+                {GLOBAL_THEMES.map((t) => {
+                  const active = theme === t.id
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setTheme(t.id)}
+                      className={cn(
+                        'flex flex-col items-start rounded-2xl p-3.5 text-left transition-all border cursor-pointer',
+                        active
+                          ? 'border-terracotta bg-surface-raised shadow-xs ring-2 ring-terracotta/30'
+                          : 'border-hairline bg-surface-sunken/40 hover:bg-surface-raised hover:border-hairline/80',
+                      )}
+                    >
+                      <div className="flex w-full items-center justify-between">
+                        <span
+                          className="size-3.5 rounded-full border border-black/15 shadow-2xs"
+                          style={{ backgroundColor: t.colorDot }}
+                        />
+                        {active && <Check className="size-3.5 text-terracotta" />}
+                      </div>
+                      <span className="mt-3 text-[13px] font-medium text-foreground">
+                        {t.cnLabel}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground font-mono">
+                        {t.label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </Pebble>
+
             <Pebble className="rise p-10">
               <div className="flex items-start gap-4">
                 <span className="mt-1 grid size-9 shrink-0 place-items-center rounded-full bg-surface-sunken">

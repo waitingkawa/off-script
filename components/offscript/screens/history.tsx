@@ -16,14 +16,15 @@ import {
 import { Screen } from '../app-window'
 import { Meta, Pebble, PillButton, ScreenHeader } from '../primitives'
 import { assistLabel, sessions, type PracticeSession } from '@/lib/offscript-data'
+import { GlobalTheme, useTheme } from '../theme-context'
 import { cn } from '@/lib/utils'
 
-export type Theme = 'warm-sand' | 'cool-gray' | 'muted-blue' | 'terracotta'
+export type Theme = GlobalTheme
 
 export const THEME_CONFIG: Record<
-  Theme,
+  GlobalTheme,
   {
-    id: Theme
+    id: GlobalTheme
     label: string
     cnLabel: string
     bgGradient: string
@@ -41,28 +42,10 @@ export const THEME_CONFIG: Record<
     themeDot: string
   }
 > = {
-  terracotta: {
-    id: 'terracotta',
-    label: 'Terracotta',
-    cnLabel: '冷淡红',
-    bgGradient: 'from-[#e9e7e2] via-[#ebe9e5] to-[#dfddd8]',
-    glowColor: 'rgba(181, 109, 86, 0.25)',
-    dotDefault: 'bg-[#c8c5c0] hover:bg-[#b56d56]',
-    dotHover: 'bg-[#b56d56]',
-    dotActive: 'bg-white shadow-[0_0_24px_rgba(255,255,255,0.9)]',
-    lineColor: '#c8c5c0',
-    accentText: 'text-[#b56d56]',
-    badgeBg: 'bg-[#e9e7e2]/90 text-[#302f2d]',
-    cardBg: 'bg-[#f4f3f0]/95',
-    cardBorder: 'border-[#dfddd8]',
-    activeRing: 'ring-4 ring-white/60',
-    halo: 'bg-white/40 ring-1 ring-white/60',
-    themeDot: '#b56d56',
-  },
   'warm-sand': {
     id: 'warm-sand',
     label: 'Warm Sand',
-    cnLabel: '暖沙色',
+    cnLabel: '暖沙',
     bgGradient: 'from-[#f1efe9] via-[#f4f2ee] to-[#ebe8e2]',
     glowColor: 'rgba(215, 208, 195, 0.5)',
     dotDefault: 'bg-[#d0ccc5] hover:bg-[#9a948a]',
@@ -75,7 +58,25 @@ export const THEME_CONFIG: Record<
     cardBorder: 'border-[#e4dfd8]',
     activeRing: 'ring-4 ring-white/60',
     halo: 'bg-white/40 ring-1 ring-white/60',
-    themeDot: '#d0ccc5',
+    themeDot: '#a68b6d',
+  },
+  terracotta: {
+    id: 'terracotta',
+    label: 'Terracotta',
+    cnLabel: '冷淡红',
+    bgGradient: 'from-[#e9e7e2] via-[#ebe9e5] to-[#dfddd8]',
+    glowColor: 'rgba(181, 109, 86, 0.28)',
+    dotDefault: 'bg-[#c8c5c0] hover:bg-[#b56d56]',
+    dotHover: 'bg-[#b56d56]',
+    dotActive: 'bg-white shadow-[0_0_24px_rgba(255,255,255,0.9)]',
+    lineColor: '#c8c5c0',
+    accentText: 'text-[#b56d56]',
+    badgeBg: 'bg-[#e9e7e2]/90 text-[#302f2d]',
+    cardBg: 'bg-[#f4f3f0]/95',
+    cardBorder: 'border-[#dfddd8]',
+    activeRing: 'ring-4 ring-white/60',
+    halo: 'bg-white/40 ring-1 ring-white/60',
+    themeDot: '#b56d56',
   },
   'cool-gray': {
     id: 'cool-gray',
@@ -93,7 +94,7 @@ export const THEME_CONFIG: Record<
     cardBorder: 'border-[#d4d6dc]',
     activeRing: 'ring-4 ring-white/60',
     halo: 'bg-white/40 ring-1 ring-white/60',
-    themeDot: '#7a7e8b',
+    themeDot: '#626673',
   },
   'muted-blue': {
     id: 'muted-blue',
@@ -111,7 +112,43 @@ export const THEME_CONFIG: Record<
     cardBorder: 'border-[#cfd8e2]',
     activeRing: 'ring-4 ring-white/60',
     halo: 'bg-white/40 ring-1 ring-white/60',
-    themeDot: '#7d94b0',
+    themeDot: '#4e6b8e',
+  },
+  sage: {
+    id: 'sage',
+    label: 'Muted Sage',
+    cnLabel: '冷淡绿',
+    bgGradient: 'from-[#dce7d9] via-[#e8f0e5] to-[#d6e2d3]',
+    glowColor: 'rgba(168, 195, 160, 0.45)',
+    dotDefault: 'bg-[#9bb097] hover:bg-[#769172]',
+    dotHover: 'bg-[#769172]',
+    dotActive: 'bg-white shadow-[0_0_24px_rgba(255,255,255,0.9)]',
+    lineColor: '#8ca288',
+    accentText: 'text-[#364933]',
+    badgeBg: 'bg-[#c8d9c4]/90 text-[#293a26]',
+    cardBg: 'bg-[#f4f8f3]/95',
+    cardBorder: 'border-[#c1d3be]',
+    activeRing: 'ring-4 ring-white/60',
+    halo: 'bg-white/40 ring-1 ring-white/60',
+    themeDot: '#527050',
+  },
+  'dark-slate': {
+    id: 'dark-slate',
+    label: 'Dark Slate',
+    cnLabel: '夜间深冷',
+    bgGradient: 'from-[#191b1f] via-[#24272e] to-[#14161a]',
+    glowColor: 'rgba(216, 130, 104, 0.25)',
+    dotDefault: 'bg-[#3a3e49] hover:bg-[#d88268]',
+    dotHover: 'bg-[#d88268]',
+    dotActive: 'bg-white text-slate-900 shadow-[0_0_24px_rgba(255,255,255,0.9)]',
+    lineColor: '#3a3e49',
+    accentText: 'text-[#d88268]',
+    badgeBg: 'bg-[#2f333c]/90 text-[#e4e6eb]',
+    cardBg: 'bg-[#24272e]/95',
+    cardBorder: 'border-[#3a3e49]',
+    activeRing: 'ring-4 ring-white/40',
+    halo: 'bg-white/30 ring-1 ring-white/40',
+    themeDot: '#d88268',
   },
 }
 
@@ -144,7 +181,7 @@ export function HistoryScreen({
   onOpenNote: () => void
   onStart: () => void
 }) {
-  const [theme, setTheme] = useState<Theme>('warm-sand')
+  const { theme, setTheme } = useTheme()
   const [selectedIndex, setSelectedIndex] = useState<number>(sessions.length - 1)
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
   const [zoom, setZoom] = useState<number>(1.0)
@@ -160,7 +197,7 @@ export function HistoryScreen({
     py: 0,
   })
 
-  const currentTheme = THEME_CONFIG[theme]
+  const currentTheme = THEME_CONFIG[theme] || THEME_CONFIG['warm-sand']
 
   // Define trajectory control points inside 1100x600 space
   const controlPoints = useMemo(
