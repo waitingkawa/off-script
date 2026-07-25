@@ -20,9 +20,7 @@ import { Meta, Pebble, PillButton, ScreenHeader } from '../primitives'
 import { assistLabel, sessions } from '@/lib/offscript-data'
 import { cn } from '@/lib/utils'
 
-// Emoji set assigned to trajectory nodes for expressive visual identification
-const NODE_EMOJIS = ['👋', '🎨', '🏛️', '🛠️', '📈', '⏱️', '🧩', '🛡️', '🚀', '💡', '🌱', '🎙️', '🎯', '✨']
-
+// Practice History Trajectory Screen
 export function HistoryScreen({
   empty = false,
   onOpenNote,
@@ -66,34 +64,15 @@ export function HistoryScreen({
       const angleRad = (angleDeg * Math.PI) / 180
       const x = centerX + arcRadius * Math.cos(angleRad)
       const y = centerY + arcRadius * Math.sin(angleRad)
-      const emoji = NODE_EMOJIS[index % NODE_EMOJIS.length]
       return {
         session,
         index,
         angleDeg,
         x,
         y,
-        emoji,
       }
     })
   }, [totalSessions, centerX, centerY, arcRadius, startAngle, endAngle])
-
-  // Radiating field lines under the arch (like the reference diagram curves)
-  const fieldLines = useMemo(() => {
-    const lines = []
-    const originY = centerY + 10
-    for (let i = 0; i < trajectoryPoints.length; i++) {
-      const pt = trajectoryPoints[i]
-      // Quadratic bezier curve from origin (centerX, originY) to node (pt.x, pt.y)
-      const ctrlX = centerX + (pt.x - centerX) * 0.4
-      const ctrlY = originY - (originY - pt.y) * 0.5
-      lines.push({
-        id: i,
-        path: `M ${centerX} ${originY} Q ${ctrlX} ${ctrlY} ${pt.x} ${pt.y}`,
-      })
-    }
-    return lines
-  }, [trajectoryPoints, centerX, centerY])
 
   // Auto-play arc rotation timer
   useEffect(() => {
@@ -253,45 +232,7 @@ export function HistoryScreen({
               transformOrigin: '50% 50%',
             }}
           >
-            {/* SVG Arc Trajectory & Radiating Field Lines */}
-            <svg className="absolute inset-0 h-full w-full overflow-visible pointer-events-none">
-              {/* Radiating Field Lines connecting bottom center to nodes */}
-              {fieldLines.map((line) => {
-                const isSelected = line.id === selectedIndex
-                return (
-                  <path
-                    key={line.id}
-                    d={line.path}
-                    fill="none"
-                    className={cn(
-                      'transition-all duration-300',
-                      isSelected
-                        ? 'stroke-terracotta/60 stroke-[1.5]'
-                        : 'stroke-foreground/10 stroke-[0.8]',
-                    )}
-                  />
-                );
-              })}
-
-              {/* Main Smooth Trajectory Arc */}
-              <path
-                d={`M ${centerX + arcRadius * Math.cos((startAngle * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((startAngle * Math.PI) / 180)} A ${arcRadius} ${arcRadius} 0 0 1 ${centerX + arcRadius * Math.cos((endAngle * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((endAngle * Math.PI) / 180)}`}
-                fill="none"
-                className="stroke-foreground/20"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-              />
-
-              {/* Solid Arc Highlight between first and active node */}
-              <path
-                d={`M ${centerX + arcRadius * Math.cos((startAngle * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((startAngle * Math.PI) / 180)} A ${arcRadius} ${arcRadius} 0 0 1 ${activePoint.x} ${activePoint.y}`}
-                fill="none"
-                className="stroke-terracotta/70"
-                strokeWidth={2}
-              />
-            </svg>
-
-            {/* Session Nodes matching the Reference Image Emblem Style with Emoji */}
+            {/* Session Nodes matching reference image circular pellets (No connecting lines) */}
             {trajectoryPoints.map((pt) => {
               const isSelected = pt.index === selectedIndex
               const isHovered = pt.index === hoverIndex
@@ -302,13 +243,18 @@ export function HistoryScreen({
                   className="absolute -translate-x-1/2 -translate-y-1/2 transition-transform duration-300"
                   style={{ left: `${pt.x}px`, top: `${pt.y}px` }}
                 >
+                  {/* Soft animated gradient glow aura on hover */}
+                  {isHovered && !isSelected && (
+                    <div className="absolute inset-0 -m-3 rounded-full bg-gradient-to-tr from-terracotta/60 via-sky-400/50 to-indigo-500/60 blur-md pointer-events-none transition-all duration-300 animate-pulse" />
+                  )}
+
                   {/* Outer pulse aura for selected node */}
                   {isSelected && (
                     <div className="absolute inset-0 -m-3 rounded-full animate-ping opacity-25 bg-terracotta" />
                   )}
 
                   {/* Circular Node Emblem / Capsule matching reference image */}
-                  <div className="relative flex flex-col items-center">
+                  <div className="relative flex items-center">
                     <button
                       type="button"
                       onClick={() => {
@@ -321,63 +267,37 @@ export function HistoryScreen({
                       className={cn(
                         'group relative flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer focus:outline-hidden select-none',
                         isSelected
-                          ? 'size-14 bg-surface-raised border-2 border-terracotta text-terracotta shadow-lg shadow-terracotta/20 scale-110 z-30 ring-4 ring-terracotta/20'
+                          ? 'size-10 bg-surface-raised border-2 border-terracotta text-terracotta shadow-xl shadow-terracotta/25 scale-125 z-30 ring-4 ring-terracotta/20'
                           : isHovered
-                            ? 'size-13 bg-surface-raised border-2 border-terracotta/70 text-terracotta shadow-md scale-110 z-20'
-                            : 'size-10 bg-surface-raised/80 border border-hairline/80 text-foreground/80 hover:border-terracotta/50 shadow-2xs z-10',
+                            ? 'size-10 bg-gradient-to-tr from-terracotta via-sky-400 to-indigo-500 text-white border-2 border-white/80 shadow-lg shadow-terracotta/30 scale-125 z-20'
+                            : 'size-7.5 bg-foreground/20 hover:bg-foreground/30 border border-foreground/15 text-foreground/80 shadow-2xs z-10',
                       )}
                     >
-                      {/* Node Emoji Emblem */}
-                      <span
-                        className={cn(
-                          'transition-transform duration-200 leading-none select-none',
-                          isSelected
-                            ? 'text-[22px] scale-110'
-                            : isHovered
-                              ? 'text-[20px]'
-                              : 'text-[16px] group-hover:scale-110',
-                        )}
-                      >
-                        {pt.emoji}
-                      </span>
-
-                      {/* Small Active Badge Dot on Node top corner */}
-                      {isSelected && (
-                        <span className="absolute top-0 right-0 size-3 rounded-full bg-terracotta border-2 border-surface-raised" />
+                      {/* Inner Dot for pellet styling */}
+                      {isSelected ? (
+                        <span className="size-3 rounded-full bg-terracotta shadow-xs" />
+                      ) : (
+                        <span className="size-1.5 rounded-full bg-foreground/50 group-hover:bg-white" />
                       )}
                     </button>
 
-                    {/* Numeric Sub-label under selected / hovered node (matching the "B 5" / "5" label in reference image) */}
-                    <div
-                      className={cn(
-                        'mt-1.5 font-mono text-[11px] font-semibold tracking-tight transition-all duration-200',
-                        isSelected
-                          ? 'text-foreground opacity-100 scale-110'
-                          : isHovered
-                            ? 'text-terracotta opacity-100'
-                            : 'text-muted-foreground/60 opacity-0',
-                      )}
-                    >
-                      {pt.index + 1}
-                    </div>
+                    {/* Active Floating Side Label (like "Patagonian Desert" in reference image) */}
+                    {isSelected && (
+                      <div className="absolute top-1/2 left-full ml-3.5 -translate-y-1/2 z-40 whitespace-nowrap px-3.5 py-1.5 rounded-full bg-surface-raised/95 text-foreground border border-hairline backdrop-blur-md shadow-lg flex items-center gap-2.5 animate-in fade-in slide-in-from-left-2 duration-300">
+                        <span className="text-[12px] font-semibold text-foreground">
+                          {pt.session.topicAnchor}
+                        </span>
+                        <span className="text-[10px] font-mono text-muted-foreground border-l border-hairline pl-2">
+                          {pt.session.duration}
+                        </span>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Floating Topic Card Callout for Selected Node */}
-                  {isSelected && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-40 whitespace-nowrap px-4 py-1.5 rounded-full bg-surface-raised/95 text-foreground border border-hairline backdrop-blur-md shadow-lg flex items-center gap-2.5 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <span className="text-[12px] font-semibold text-foreground">
-                        {pt.session.topicAnchor}
-                      </span>
-                      <span className="text-[10px] font-mono text-muted-foreground border-l border-hairline pl-2.5">
-                        {pt.session.duration}
-                      </span>
-                    </div>
-                  )}
 
                   {/* Tooltip for Hovered Unselected Nodes */}
                   {isHovered && !isSelected && (
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-40 whitespace-nowrap rounded-md bg-surface-raised text-foreground border border-hairline px-2.5 py-1 text-[11px] font-medium shadow-md backdrop-blur-xs">
-                      #{pt.index + 1} · {pt.session.date}
+                      #{pt.index + 1} · {pt.session.date} · {pt.session.topicAnchor}
                     </div>
                   )}
                 </div>
@@ -499,7 +419,7 @@ export function HistoryScreen({
 
         {/* Selected Session Detail Card Overlay */}
         {showDetailCard && activeSession && (
-          <div className="absolute top-16 left-8 z-30 w-[310px] rounded-2xl p-4.5 shadow-xl bg-surface-raised/95 text-foreground border border-hairline backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-3">
+          <div className="absolute top-16 right-8 z-30 w-[310px] rounded-2xl p-4.5 shadow-xl bg-surface-raised/95 text-foreground border border-hairline backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-3">
             <div className="flex items-center justify-between border-b border-hairline pb-2.5">
               <div>
                 <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
