@@ -47,11 +47,11 @@ export function HistoryScreen({
 
   // Arch Trajectory Layout Dimensions (in 1100x620 canvas space)
   // Center is placed lower (y=520) so a grand wide arc sweeps across the canvas
-  const centerX = 550
-  const centerY = 520
-  const arcRadius = 460
-  const startAngle = -162 // Left-most base of the expanded arc
-  const endAngle = -18 // Right-most base of the expanded arc
+  const centerX = 0
+  const centerY = 0
+  const arcRadius = 600
+  const startAngle = -140
+  const endAngle = -50 // Right-most base of the expanded arc
 
   // Calculate position along upward arch with wide node spacing
   const totalSessions = sessions.length
@@ -226,10 +226,10 @@ export function HistoryScreen({
           aria-label="Practice history trajectory nodes. Drag to scroll, mouse wheel to zoom."
         >
           <div
-            className="absolute inset-0 transition-transform duration-100 ease-out"
+            className="absolute inset-0 transition-transform duration-500 ease-out"
             style={{
-              transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
-              transformOrigin: '50% 50%',
+              transform: `translate(calc(60% + ${panOffset.x}px), calc(75% + ${panOffset.y}px)) scale(${zoom}) translate(${-activePoint.x}px, ${-activePoint.y}px)`,
+              transformOrigin: `${activePoint.x}px ${activePoint.y}px`,
             }}
           >
             {/* Session Nodes matching reference image circular pellets (No connecting lines) */}
@@ -256,9 +256,11 @@ export function HistoryScreen({
                       aria-label={`Session on ${pt.session.date}: ${pt.session.topicAnchor}`}
                       className={cn(
                         'group relative flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer focus:outline-hidden select-none',
-                        isSelected || isHovered
-                          ? 'size-5 bg-gradient-to-tr from-sky-400 to-indigo-500 shadow-md scale-125 z-30'
-                          : 'size-5 bg-foreground/20 hover:bg-foreground/30 z-10',
+                        isSelected
+                          ? 'size-5 bg-slate-500 dark:bg-slate-400 shadow-md scale-125 z-30'
+                          : isHovered
+                            ? 'size-5 bg-slate-400 dark:bg-slate-300 shadow-md scale-125 z-20'
+                            : 'size-5 bg-foreground/20 hover:bg-foreground/30 z-10',
                       )}
                     />
 
@@ -287,13 +289,7 @@ export function HistoryScreen({
           </div>
         </div>
 
-        {/* Center Bottom Description Pill Card (matching reference image bottom note card) */}
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 pointer-events-auto max-w-[420px] text-center">
-          <div className="rounded-2xl bg-surface-raised/85 px-5 py-2.5 text-[11px] text-muted-foreground leading-relaxed border border-hairline/80 backdrop-blur-md shadow-xs">
-            Each practice session maps onto an interconnected trajectory arc. Slide or click nodes
-            to review your spontaneous speaking evolution.
-          </div>
-        </div>
+
 
         {/* Bottom Navigation Control Bar with Slider */}
         <div className="absolute bottom-4 left-8 right-8 z-20 flex items-center justify-between pointer-events-none">

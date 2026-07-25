@@ -5,6 +5,7 @@ import { ArrowUpRight, Check, Copy, Download } from 'lucide-react'
 import { Screen } from '../app-window'
 import { Chip, Hairline, Meta, Pebble, PillButton, ScreenHeader } from '../primitives'
 import { assistLabel, learningNote } from '@/lib/offscript-data'
+import { ImageDiary } from './image-diary'
 
 export function LearningNoteScreen({ onHistory }: { onHistory: () => void }) {
   const [copied, setCopied] = useState<'note' | 'prompt' | null>(null)
@@ -55,6 +56,7 @@ export function LearningNoteScreen({ onHistory }: { onHistory: () => void }) {
               </ol>
             </Pebble>
 
+            <ImageDiary />
             <Pebble tone="raised" className="p-10">
               <Meta className="text-[10px]">One durable improvement</Meta>
               <p className="mt-5 max-w-[58ch] text-[19px] leading-relaxed font-light text-foreground">
