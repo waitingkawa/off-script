@@ -18,20 +18,7 @@ export const metadata: Metadata = {
     'A calm macOS practice space for speaking spontaneous English. Record one attempt, receive one high-value coaching point, and speak again without a script.',
   generator: 'v0.app',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
+    icon: '/icon.svg',
     apple: '/apple-icon.png',
   },
 }
@@ -48,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background">
-      <body className="font-sans antialiased">
+      <body className={`${_plexSans.className} antialiased`}>
         {children}
       </body>
     </html>
