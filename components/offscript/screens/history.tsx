@@ -3,31 +3,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Bird,
-  BookOpen,
   ChevronLeft,
   ChevronRight,
   Clock,
-  Compass,
   FileText,
   Info,
-  Mic,
   Minus,
   Pause,
   Play,
   Plus,
-  Quote,
   RotateCcw,
   Sparkle,
-  Target,
-  Zap,
 } from 'lucide-react'
 import { Screen } from '../app-window'
 import { Meta, Pebble, PillButton, ScreenHeader } from '../primitives'
 import { assistLabel, sessions } from '@/lib/offscript-data'
 import { cn } from '@/lib/utils'
 
-// Icon set assigned to nodes to give each session node a unique graphic mark like in the reference image
-const NODE_ICONS = [Bird, Target, Sparkle, BookOpen, Mic, Compass, Quote, Zap]
+// Emoji set assigned to trajectory nodes for expressive visual identification
+const NODE_EMOJIS = ['👋', '🎨', '🏛️', '🛠️', '📈', '⏱️', '🧩', '🛡️', '🚀', '💡', '🌱', '🎙️', '🎯', '✨']
 
 export function HistoryScreen({
   empty = false,
@@ -54,17 +48,17 @@ export function HistoryScreen({
   })
 
   // Arch Trajectory Layout Dimensions (in 1100x620 canvas space)
-  // Center is placed lower (y=440) so the arc curves UPWARDS like a dome/rainbow in the reference image
+  // Center is placed lower (y=520) so a grand wide arc sweeps across the canvas
   const centerX = 550
-  const centerY = 430
-  const arcRadius = 290
+  const centerY = 520
+  const arcRadius = 460
+  const startAngle = -162 // Left-most base of the expanded arc
+  const endAngle = -18 // Right-most base of the expanded arc
 
-  // Calculate position along upward arch (sweep from 200° to 340° -> -160° to -20°)
+  // Calculate position along upward arch with wide node spacing
   const totalSessions = sessions.length
   const trajectoryPoints = useMemo(() => {
     return sessions.map((session, index) => {
-      const startAngle = -155 // Left-most base of the arc
-      const endAngle = -25 // Right-most base of the arc
       const angleDeg =
         totalSessions > 1
           ? startAngle + (index / (totalSessions - 1)) * (endAngle - startAngle)
@@ -72,17 +66,17 @@ export function HistoryScreen({
       const angleRad = (angleDeg * Math.PI) / 180
       const x = centerX + arcRadius * Math.cos(angleRad)
       const y = centerY + arcRadius * Math.sin(angleRad)
-      const IconComponent = NODE_ICONS[index % NODE_ICONS.length]
+      const emoji = NODE_EMOJIS[index % NODE_EMOJIS.length]
       return {
         session,
         index,
         angleDeg,
         x,
         y,
-        IconComponent,
+        emoji,
       }
     })
-  }, [totalSessions, centerX, centerY, arcRadius])
+  }, [totalSessions, centerX, centerY, arcRadius, startAngle, endAngle])
 
   // Radiating field lines under the arch (like the reference diagram curves)
   const fieldLines = useMemo(() => {
@@ -281,7 +275,7 @@ export function HistoryScreen({
 
               {/* Main Smooth Trajectory Arc */}
               <path
-                d={`M ${centerX + arcRadius * Math.cos((-160 * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((-160 * Math.PI) / 180)} A ${arcRadius} ${arcRadius} 0 0 1 ${centerX + arcRadius * Math.cos((-20 * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((-20 * Math.PI) / 180)}`}
+                d={`M ${centerX + arcRadius * Math.cos((startAngle * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((startAngle * Math.PI) / 180)} A ${arcRadius} ${arcRadius} 0 0 1 ${centerX + arcRadius * Math.cos((endAngle * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((endAngle * Math.PI) / 180)}`}
                 fill="none"
                 className="stroke-foreground/20"
                 strokeWidth={1.5}
@@ -290,18 +284,17 @@ export function HistoryScreen({
 
               {/* Solid Arc Highlight between first and active node */}
               <path
-                d={`M ${centerX + arcRadius * Math.cos((-155 * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((-155 * Math.PI) / 180)} A ${arcRadius} ${arcRadius} 0 0 1 ${activePoint.x} ${activePoint.y}`}
+                d={`M ${centerX + arcRadius * Math.cos((startAngle * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((startAngle * Math.PI) / 180)} A ${arcRadius} ${arcRadius} 0 0 1 ${activePoint.x} ${activePoint.y}`}
                 fill="none"
                 className="stroke-terracotta/70"
                 strokeWidth={2}
               />
             </svg>
 
-            {/* Session Nodes matching the Reference Image Emblem Style */}
+            {/* Session Nodes matching the Reference Image Emblem Style with Emoji */}
             {trajectoryPoints.map((pt) => {
               const isSelected = pt.index === selectedIndex
               const isHovered = pt.index === hoverIndex
-              const NodeIcon = pt.IconComponent
 
               return (
                 <div
@@ -326,25 +319,27 @@ export function HistoryScreen({
                       onMouseLeave={() => setHoverIndex(null)}
                       aria-label={`Session on ${pt.session.date}: ${pt.session.topicAnchor}`}
                       className={cn(
-                        'group relative flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer focus:outline-hidden',
+                        'group relative flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer focus:outline-hidden select-none',
                         isSelected
                           ? 'size-14 bg-surface-raised border-2 border-terracotta text-terracotta shadow-lg shadow-terracotta/20 scale-110 z-30 ring-4 ring-terracotta/20'
                           : isHovered
                             ? 'size-13 bg-surface-raised border-2 border-terracotta/70 text-terracotta shadow-md scale-110 z-20'
-                            : 'size-10 bg-surface-raised/80 border border-hairline/80 text-foreground/60 hover:text-terracotta hover:border-terracotta/50 shadow-2xs z-10',
+                            : 'size-10 bg-surface-raised/80 border border-hairline/80 text-foreground/80 hover:border-terracotta/50 shadow-2xs z-10',
                       )}
                     >
-                      {/* Node Emblem Icon */}
-                      <NodeIcon
+                      {/* Node Emoji Emblem */}
+                      <span
                         className={cn(
-                          'transition-transform duration-200',
+                          'transition-transform duration-200 leading-none select-none',
                           isSelected
-                            ? 'size-6 scale-110'
+                            ? 'text-[22px] scale-110'
                             : isHovered
-                              ? 'size-5.5'
-                              : 'size-4.5 group-hover:scale-110',
+                              ? 'text-[20px]'
+                              : 'text-[16px] group-hover:scale-110',
                         )}
-                      />
+                      >
+                        {pt.emoji}
+                      </span>
 
                       {/* Small Active Badge Dot on Node top corner */}
                       {isSelected && (
