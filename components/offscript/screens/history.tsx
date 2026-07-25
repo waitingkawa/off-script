@@ -2,22 +2,32 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  Bird,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Compass,
   FileText,
   Info,
+  Mic,
   Minus,
   Pause,
   Play,
   Plus,
+  Quote,
   RotateCcw,
   Sparkle,
+  Target,
+  Zap,
 } from 'lucide-react'
 import { Screen } from '../app-window'
 import { Meta, Pebble, PillButton, ScreenHeader } from '../primitives'
 import { assistLabel, sessions } from '@/lib/offscript-data'
 import { cn } from '@/lib/utils'
+
+// Icon set assigned to nodes to give each session node a unique graphic mark like in the reference image
+const NODE_ICONS = [Bird, Target, Sparkle, BookOpen, Mic, Compass, Quote, Zap]
 
 export function HistoryScreen({
   empty = false,
@@ -43,53 +53,55 @@ export function HistoryScreen({
     py: 0,
   })
 
-  // Clock Layout Dimensions (in 1100x600 space)
+  // Arch Trajectory Layout Dimensions (in 1100x620 canvas space)
+  // Center is placed lower (y=440) so the arc curves UPWARDS like a dome/rainbow in the reference image
   const centerX = 550
-  const centerY = 280
-  const clockRadius = 195
+  const centerY = 430
+  const arcRadius = 290
 
-  // Compute position & angle for each session along the Clock Arc (300deg sweep starting from 12 o'clock -90deg)
+  // Calculate position along upward arch (sweep from 200° to 340° -> -160° to -20°)
   const totalSessions = sessions.length
   const trajectoryPoints = useMemo(() => {
     return sessions.map((session, index) => {
-      const startAngle = -90 // 12 o'clock position
-      const endAngle = 210 // 10 o'clock position (300 deg sweep clockwise)
+      const startAngle = -155 // Left-most base of the arc
+      const endAngle = -25 // Right-most base of the arc
       const angleDeg =
         totalSessions > 1
           ? startAngle + (index / (totalSessions - 1)) * (endAngle - startAngle)
-          : startAngle
+          : (startAngle + endAngle) / 2
       const angleRad = (angleDeg * Math.PI) / 180
-      const x = centerX + clockRadius * Math.cos(angleRad)
-      const y = centerY + clockRadius * Math.sin(angleRad)
+      const x = centerX + arcRadius * Math.cos(angleRad)
+      const y = centerY + arcRadius * Math.sin(angleRad)
+      const IconComponent = NODE_ICONS[index % NODE_ICONS.length]
       return {
         session,
         index,
         angleDeg,
         x,
         y,
+        IconComponent,
       }
     })
-  }, [totalSessions, centerX, centerY, clockRadius])
+  }, [totalSessions, centerX, centerY, arcRadius])
 
-  // Clock tick marks generation (60 fine ticks around clock ring)
-  const clockTicks = useMemo(() => {
-    const ticks = []
-    for (let i = 0; i < 60; i++) {
-      const angleDeg = -90 + (i / 60) * 360
-      const angleRad = (angleDeg * Math.PI) / 180
-      const isMajor = i % 5 === 0
-      const innerR = clockRadius - (isMajor ? 14 : 7)
-      const outerR = clockRadius - 3
-      const x1 = centerX + innerR * Math.cos(angleRad)
-      const y1 = centerY + innerR * Math.sin(angleRad)
-      const x2 = centerX + outerR * Math.cos(angleRad)
-      const y2 = centerY + outerR * Math.sin(angleRad)
-      ticks.push({ index: i, x1, y1, x2, y2, isMajor, angleDeg })
+  // Radiating field lines under the arch (like the reference diagram curves)
+  const fieldLines = useMemo(() => {
+    const lines = []
+    const originY = centerY + 10
+    for (let i = 0; i < trajectoryPoints.length; i++) {
+      const pt = trajectoryPoints[i]
+      // Quadratic bezier curve from origin (centerX, originY) to node (pt.x, pt.y)
+      const ctrlX = centerX + (pt.x - centerX) * 0.4
+      const ctrlY = originY - (originY - pt.y) * 0.5
+      lines.push({
+        id: i,
+        path: `M ${centerX} ${originY} Q ${ctrlX} ${ctrlY} ${pt.x} ${pt.y}`,
+      })
     }
-    return ticks
-  }, [centerX, centerY, clockRadius])
+    return lines
+  }, [trajectoryPoints, centerX, centerY])
 
-  // Auto-play clock rotation timer
+  // Auto-play arc rotation timer
   useEffect(() => {
     if (!isPlaying) return
     const timer = setInterval(() => {
@@ -172,49 +184,58 @@ export function HistoryScreen({
 
       {/* Main Canvas Container */}
       <div className="relative mt-5 h-[620px] w-full overflow-hidden rounded-[2.25rem] bg-surface-sunken border border-hairline transition-colors duration-300 ease-in-out select-none">
-        {/* Ambient Radial Blur Glow around selected clock position */}
+        {/* Soft Blue Radial Light Flare under the Arch (matching reference image) */}
         <div
-          className="pointer-events-none absolute size-[450px] rounded-full bg-terracotta/15 blur-3xl transition-all duration-700 ease-out"
+          className="pointer-events-none absolute size-[500px] rounded-full bg-sky-400/12 dark:bg-sky-500/10 blur-3xl transition-all duration-700 ease-out"
           style={{
-            left: `${activePoint.x - 225 + panOffset.x}px`,
-            top: `${activePoint.y - 225 + panOffset.y}px`,
+            left: `${centerX - 250 + panOffset.x}px`,
+            top: `${centerY - 180 + panOffset.y}px`,
           }}
         />
 
-        {/* Top Floating Bar: Minimal Title & Play Button */}
-        <div className="absolute top-6 left-8 right-8 z-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-[13px] font-medium tracking-wide text-foreground">Offscript</span>
-            <span className="text-[12px] font-medium text-muted-foreground">Practice Chronometer</span>
-            <span className="hidden sm:inline-block font-mono text-[10px] tracking-wider text-muted-foreground/70 uppercase">
-              1 Clock Node = 1 Session
-            </span>
-          </div>
+        {/* Selected Node Accent Glow */}
+        <div
+          className="pointer-events-none absolute size-[280px] rounded-full bg-terracotta/20 blur-2xl transition-all duration-500 ease-out"
+          style={{
+            left: `${activePoint.x - 140 + panOffset.x}px`,
+            top: `${activePoint.y - 140 + panOffset.y}px`,
+          }}
+        />
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsPlaying(!isPlaying)}
-              className={cn(
-                'flex items-center gap-2 rounded-full px-4 py-1.5 text-[12px] font-medium transition-all duration-200 border cursor-pointer',
-                isPlaying
-                  ? 'bg-terracotta text-white border-terracotta shadow-xs'
-                  : 'bg-surface-raised text-foreground hover:bg-surface-raised/80 border-hairline',
-              )}
-            >
-              {isPlaying ? (
-                <>
-                  <Pause className="size-3.5 fill-current" />
-                  <span>Pause Rotation</span>
-                </>
-              ) : (
-                <>
-                  <Play className="size-3.5 fill-current" />
-                  <span>Auto Rotate</span>
-                </>
-              )}
-            </button>
+        {/* Top Floating Badge Pill (matching reference image pill header) */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+          <div className="flex items-center gap-2.5 rounded-full bg-surface-raised/90 px-4 py-1.5 text-[12px] font-medium text-foreground border border-hairline backdrop-blur-md shadow-xs">
+            <Bird className="size-3.5 text-terracotta" />
+            <span>Offscript</span>
+            <span className="text-muted-foreground/40">•</span>
+            <span className="text-muted-foreground font-normal">Trajectory</span>
           </div>
+        </div>
+
+        {/* Top-Right Play / Auto-Rotate Toggle */}
+        <div className="absolute top-6 right-8 z-20 pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => setIsPlaying(!isPlaying)}
+            className={cn(
+              'flex items-center gap-2 rounded-full px-4 py-1.5 text-[12px] font-medium transition-all duration-200 border cursor-pointer',
+              isPlaying
+                ? 'bg-terracotta text-white border-terracotta shadow-xs'
+                : 'bg-surface-raised text-foreground hover:bg-surface-raised/80 border-hairline',
+            )}
+          >
+            {isPlaying ? (
+              <>
+                <Pause className="size-3.5 fill-current" />
+                <span>Pause</span>
+              </>
+            ) : (
+              <>
+                <Play className="size-3.5 fill-current" />
+                <span>Auto Play</span>
+              </>
+            )}
+          </button>
         </div>
 
         {/* Interactive Canvas */}
@@ -229,7 +250,7 @@ export function HistoryScreen({
             setZoom((z) => Math.min(1.5, Math.max(0.7, z - e.deltaY * 0.001)))
           }}
           role="application"
-          aria-label="Practice history clock chronometer. Drag to scroll, mouse wheel to zoom."
+          aria-label="Practice history trajectory nodes. Drag to scroll, mouse wheel to zoom."
         >
           <div
             className="absolute inset-0 transition-transform duration-100 ease-out"
@@ -238,85 +259,49 @@ export function HistoryScreen({
               transformOrigin: '50% 50%',
             }}
           >
-            {/* SVG Clock Face, Orbit Arc & Rotating Clock Pointer */}
+            {/* SVG Arc Trajectory & Radiating Field Lines */}
             <svg className="absolute inset-0 h-full w-full overflow-visible pointer-events-none">
-              {/* Outer Clock Dial Circle */}
-              <circle
-                cx={centerX}
-                cy={centerY}
-                r={clockRadius}
+              {/* Radiating Field Lines connecting bottom center to nodes */}
+              {fieldLines.map((line) => {
+                const isSelected = line.id === selectedIndex
+                return (
+                  <path
+                    key={line.id}
+                    d={line.path}
+                    fill="none"
+                    className={cn(
+                      'transition-all duration-300',
+                      isSelected
+                        ? 'stroke-terracotta/60 stroke-[1.5]'
+                        : 'stroke-foreground/10 stroke-[0.8]',
+                    )}
+                  />
+                );
+              })}
+
+              {/* Main Smooth Trajectory Arc */}
+              <path
+                d={`M ${centerX + arcRadius * Math.cos((-160 * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((-160 * Math.PI) / 180)} A ${arcRadius} ${arcRadius} 0 0 1 ${centerX + arcRadius * Math.cos((-20 * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((-20 * Math.PI) / 180)}`}
                 fill="none"
-                className="stroke-foreground/15"
+                className="stroke-foreground/20"
                 strokeWidth={1.5}
+                strokeDasharray="4 4"
               />
 
-              {/* Inner Accent Ring */}
-              <circle
-                cx={centerX}
-                cy={centerY}
-                r={clockRadius - 20}
+              {/* Solid Arc Highlight between first and active node */}
+              <path
+                d={`M ${centerX + arcRadius * Math.cos((-155 * Math.PI) / 180)} ${centerY + arcRadius * Math.sin((-155 * Math.PI) / 180)} A ${arcRadius} ${arcRadius} 0 0 1 ${activePoint.x} ${activePoint.y}`}
                 fill="none"
-                className="stroke-foreground/10"
-                strokeWidth={1}
-                strokeDasharray="3 6"
+                className="stroke-terracotta/70"
+                strokeWidth={2}
               />
-
-              {/* Clock Tick Marks */}
-              {clockTicks.map((tick) => (
-                <line
-                  key={tick.index}
-                  x1={tick.x1}
-                  y1={tick.y1}
-                  x2={tick.x2}
-                  y2={tick.y2}
-                  className={tick.isMajor ? 'stroke-foreground/40' : 'stroke-foreground/15'}
-                  strokeWidth={tick.isMajor ? 1.5 : 1}
-                  strokeLinecap="round"
-                />
-              ))}
-
-              {/* Clock Center Hub */}
-              <circle
-                cx={centerX}
-                cy={centerY}
-                r={16}
-                className="fill-surface-raised stroke-hairline"
-                strokeWidth={1.5}
-              />
-
-              {/* Rotating Clock Needle / Hand Arm */}
-              <g
-                style={{
-                  transformOrigin: `${centerX}px ${centerY}px`,
-                  transform: `rotate(${activePoint.angleDeg + 90}deg)`,
-                  transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
-              >
-                {/* Pointer stem */}
-                <line
-                  x1={centerX}
-                  y1={centerY}
-                  x2={centerX}
-                  y2={centerY - clockRadius + 10}
-                  className="stroke-terracotta"
-                  strokeWidth={2.5}
-                  strokeLinecap="round"
-                />
-                {/* Arrowhead Indicator */}
-                <polygon
-                  points={`${centerX - 5},${centerY - clockRadius + 20} ${centerX + 5},${centerY - clockRadius + 20} ${centerX},${centerY - clockRadius + 4}`}
-                  className="fill-terracotta"
-                />
-              </g>
-
-              {/* Inner Center Dot */}
-              <circle cx={centerX} cy={centerY} r={5} className="fill-terracotta" />
             </svg>
 
-            {/* Session Nodes along the Clock Arc */}
+            {/* Session Nodes matching the Reference Image Emblem Style */}
             {trajectoryPoints.map((pt) => {
               const isSelected = pt.index === selectedIndex
               const isHovered = pt.index === hoverIndex
+              const NodeIcon = pt.IconComponent
 
               return (
                 <div
@@ -324,50 +309,80 @@ export function HistoryScreen({
                   className="absolute -translate-x-1/2 -translate-y-1/2 transition-transform duration-300"
                   style={{ left: `${pt.x}px`, top: `${pt.y}px` }}
                 >
-                  {/* Halo pulse ring for selected active node */}
+                  {/* Outer pulse aura for selected node */}
                   {isSelected && (
-                    <div className="absolute inset-0 -m-3 rounded-full animate-ping opacity-35 bg-terracotta" />
+                    <div className="absolute inset-0 -m-3 rounded-full animate-ping opacity-25 bg-terracotta" />
                   )}
 
-                  {/* Node Button with Monochromatic Base & Single Accent Highlight on Hover/Active */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedIndex(pt.index)
-                      setIsPlaying(false)
-                    }}
-                    onMouseEnter={() => setHoverIndex(pt.index)}
-                    onMouseLeave={() => setHoverIndex(null)}
-                    aria-label={`Session on ${pt.session.date}: ${pt.session.topicAnchor}`}
-                    className={cn(
-                      'relative grid place-items-center rounded-full transition-all duration-300 cursor-pointer focus:outline-hidden',
-                      isSelected
-                        ? 'size-7.5 bg-terracotta text-white border-2 border-surface-raised shadow-md shadow-terracotta/30 scale-125 z-30 ring-4 ring-terracotta/25'
-                        : isHovered
-                          ? 'size-7 bg-terracotta text-white border-2 border-surface-raised shadow-xs scale-125 z-20'
-                          : 'size-5 bg-foreground/20 hover:bg-terracotta border border-foreground/30 z-10',
-                    )}
-                  >
-                    {/* Active inner indicator dot */}
-                    {isSelected && <span className="size-2 rounded-full bg-white shadow-xs" />}
-                  </button>
+                  {/* Circular Node Emblem / Capsule matching reference image */}
+                  <div className="relative flex flex-col items-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedIndex(pt.index)
+                        setIsPlaying(false)
+                      }}
+                      onMouseEnter={() => setHoverIndex(pt.index)}
+                      onMouseLeave={() => setHoverIndex(null)}
+                      aria-label={`Session on ${pt.session.date}: ${pt.session.topicAnchor}`}
+                      className={cn(
+                        'group relative flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer focus:outline-hidden',
+                        isSelected
+                          ? 'size-14 bg-surface-raised border-2 border-terracotta text-terracotta shadow-lg shadow-terracotta/20 scale-110 z-30 ring-4 ring-terracotta/20'
+                          : isHovered
+                            ? 'size-13 bg-surface-raised border-2 border-terracotta/70 text-terracotta shadow-md scale-110 z-20'
+                            : 'size-10 bg-surface-raised/80 border border-hairline/80 text-foreground/60 hover:text-terracotta hover:border-terracotta/50 shadow-2xs z-10',
+                      )}
+                    >
+                      {/* Node Emblem Icon */}
+                      <NodeIcon
+                        className={cn(
+                          'transition-transform duration-200',
+                          isSelected
+                            ? 'size-6 scale-110'
+                            : isHovered
+                              ? 'size-5.5'
+                              : 'size-4.5 group-hover:scale-110',
+                        )}
+                      />
 
-                  {/* Active Floating Label Callout */}
+                      {/* Small Active Badge Dot on Node top corner */}
+                      {isSelected && (
+                        <span className="absolute top-0 right-0 size-3 rounded-full bg-terracotta border-2 border-surface-raised" />
+                      )}
+                    </button>
+
+                    {/* Numeric Sub-label under selected / hovered node (matching the "B 5" / "5" label in reference image) */}
+                    <div
+                      className={cn(
+                        'mt-1.5 font-mono text-[11px] font-semibold tracking-tight transition-all duration-200',
+                        isSelected
+                          ? 'text-foreground opacity-100 scale-110'
+                          : isHovered
+                            ? 'text-terracotta opacity-100'
+                            : 'text-muted-foreground/60 opacity-0',
+                      )}
+                    >
+                      {pt.index + 1}
+                    </div>
+                  </div>
+
+                  {/* Floating Topic Card Callout for Selected Node */}
                   {isSelected && (
-                    <div className="absolute top-1/2 left-9 -translate-y-1/2 z-40 whitespace-nowrap px-3.5 py-1.5 rounded-full bg-surface-raised/95 text-foreground border border-hairline backdrop-blur-md shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
-                      <span className="text-[12px] font-medium tracking-tight">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-40 whitespace-nowrap px-4 py-1.5 rounded-full bg-surface-raised/95 text-foreground border border-hairline backdrop-blur-md shadow-lg flex items-center gap-2.5 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <span className="text-[12px] font-semibold text-foreground">
                         {pt.session.topicAnchor}
                       </span>
-                      <span className="text-[10px] font-mono text-muted-foreground border-l border-hairline pl-2">
+                      <span className="text-[10px] font-mono text-muted-foreground border-l border-hairline pl-2.5">
                         {pt.session.duration}
                       </span>
                     </div>
                   )}
 
-                  {/* Hover Tooltip for unselected nodes */}
+                  {/* Tooltip for Hovered Unselected Nodes */}
                   {isHovered && !isSelected && (
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-40 whitespace-nowrap rounded-md bg-surface-raised text-foreground border border-hairline px-2.5 py-1 text-[11px] font-medium shadow-md backdrop-blur-xs">
-                      {pt.session.date} · {pt.session.duration}
+                      #{pt.index + 1} · {pt.session.date}
                     </div>
                   )}
                 </div>
@@ -376,13 +391,21 @@ export function HistoryScreen({
           </div>
         </div>
 
-        {/* Bottom Control Bar with Clock Rotation Slider */}
-        <div className="absolute bottom-6 left-8 right-8 z-20 flex items-center justify-between pointer-events-none">
-          {/* Clock Rotation Slider Control */}
-          <div className="pointer-events-auto flex items-center gap-3.5 rounded-full bg-surface-raised/90 px-5 py-2.5 backdrop-blur-md shadow-md border border-hairline">
+        {/* Center Bottom Description Pill Card (matching reference image bottom note card) */}
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 pointer-events-auto max-w-[420px] text-center">
+          <div className="rounded-2xl bg-surface-raised/85 px-5 py-2.5 text-[11px] text-muted-foreground leading-relaxed border border-hairline/80 backdrop-blur-md shadow-xs">
+            Each practice session maps onto an interconnected trajectory arc. Slide or click nodes
+            to review your spontaneous speaking evolution.
+          </div>
+        </div>
+
+        {/* Bottom Navigation Control Bar with Slider */}
+        <div className="absolute bottom-4 left-8 right-8 z-20 flex items-center justify-between pointer-events-none">
+          {/* Clock/Trajectory Slider Control */}
+          <div className="pointer-events-auto flex items-center gap-3.5 rounded-full bg-surface-raised/90 px-5 py-2 backdrop-blur-md shadow-md border border-hairline">
             <Clock className="size-4 text-terracotta shrink-0" />
             <span className="hidden sm:inline-block font-mono text-[11px] font-medium text-muted-foreground whitespace-nowrap">
-              Clock Angle: {Math.round(activePoint.angleDeg + 90)}°
+              Trajectory Node
             </span>
 
             <button
@@ -398,7 +421,7 @@ export function HistoryScreen({
               <ChevronLeft className="size-4" />
             </button>
 
-            {/* Slider to smoothly rotate clock pointer */}
+            {/* Slider to smoothly navigate nodes */}
             <div className="flex items-center gap-2">
               <input
                 type="range"
@@ -409,7 +432,7 @@ export function HistoryScreen({
                   setSelectedIndex(Number(e.target.value))
                   setIsPlaying(false)
                 }}
-                className="w-36 sm:w-48 accent-terracotta cursor-pointer h-1.5 rounded-lg bg-hairline"
+                className="w-32 sm:w-44 accent-terracotta cursor-pointer h-1.5 rounded-lg bg-hairline"
               />
               <span className="font-mono text-[11px] font-medium text-foreground w-10 text-right">
                 {selectedIndex + 1}/{sessions.length}
@@ -430,13 +453,13 @@ export function HistoryScreen({
             </button>
           </div>
 
-          {/* Zoom and Canvas Controls */}
+          {/* Zoom and Details Toggle Controls */}
           <div className="pointer-events-auto flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShowDetailCard(!showDetailCard)}
               className={cn(
-                'grid size-9 place-items-center rounded-full backdrop-blur-md shadow-xs transition-all border border-hairline cursor-pointer',
+                'grid size-8.5 place-items-center rounded-full backdrop-blur-md shadow-xs transition-all border border-hairline cursor-pointer',
                 showDetailCard
                   ? 'bg-terracotta text-white border-terracotta'
                   : 'bg-surface-raised text-foreground hover:bg-surface-raised/80',
@@ -449,7 +472,7 @@ export function HistoryScreen({
             <button
               type="button"
               onClick={() => setZoom((z) => Math.min(1.5, z + 0.15))}
-              className="grid size-9 place-items-center rounded-full bg-surface-raised text-foreground backdrop-blur-md shadow-xs transition-all hover:bg-surface-raised/80 border border-hairline cursor-pointer"
+              className="grid size-8.5 place-items-center rounded-full bg-surface-raised text-foreground backdrop-blur-md shadow-xs transition-all hover:bg-surface-raised/80 border border-hairline cursor-pointer"
               aria-label="Zoom in"
             >
               <Plus className="size-4" />
@@ -458,7 +481,7 @@ export function HistoryScreen({
             <button
               type="button"
               onClick={() => setZoom((z) => Math.max(0.7, z - 0.15))}
-              className="grid size-9 place-items-center rounded-full bg-surface-raised text-foreground backdrop-blur-md shadow-xs transition-all hover:bg-surface-raised/80 border border-hairline cursor-pointer"
+              className="grid size-8.5 place-items-center rounded-full bg-surface-raised text-foreground backdrop-blur-md shadow-xs transition-all hover:bg-surface-raised/80 border border-hairline cursor-pointer"
               aria-label="Zoom out"
             >
               <Minus className="size-4" />
@@ -470,7 +493,7 @@ export function HistoryScreen({
                 setZoom(1.0)
                 setPanOffset({ x: 0, y: 0 })
               }}
-              className="grid size-9 place-items-center rounded-full bg-surface-raised text-foreground backdrop-blur-md shadow-xs transition-all hover:bg-surface-raised/80 border border-hairline cursor-pointer"
+              className="grid size-8.5 place-items-center rounded-full bg-surface-raised text-foreground backdrop-blur-md shadow-xs transition-all hover:bg-surface-raised/80 border border-hairline cursor-pointer"
               aria-label="Reset view"
               title="Reset View"
             >
@@ -479,25 +502,25 @@ export function HistoryScreen({
           </div>
         </div>
 
-        {/* Selected Session Detail Overlay Card */}
+        {/* Selected Session Detail Card Overlay */}
         {showDetailCard && activeSession && (
-          <div className="absolute top-20 left-8 z-30 w-[320px] rounded-2xl p-5 shadow-xl bg-surface-raised/95 text-foreground border border-hairline backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-3">
-            <div className="flex items-center justify-between border-b border-hairline pb-3">
+          <div className="absolute top-16 left-8 z-30 w-[310px] rounded-2xl p-4.5 shadow-xl bg-surface-raised/95 text-foreground border border-hairline backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-3">
+            <div className="flex items-center justify-between border-b border-hairline pb-2.5">
               <div>
                 <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {activeSession.date} · SESSION #{activeSession.id.toUpperCase()}
                 </span>
-                <h3 className="mt-1 text-[15px] font-semibold leading-snug">
+                <h3 className="mt-0.5 text-[14px] font-semibold leading-snug">
                   {activeSession.topicAnchor}
                 </h3>
               </div>
             </div>
 
-            <div className="mt-3.5 space-y-2.5">
+            <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between text-[12px]">
                 <span className="text-muted-foreground">Duration:</span>
                 <span className="font-mono font-medium bg-surface-sunken px-2 py-0.5 rounded-md border border-hairline">
-                  {activeSession.duration} (3–5 min practice)
+                  {activeSession.duration}
                 </span>
               </div>
 
@@ -510,20 +533,20 @@ export function HistoryScreen({
               </div>
 
               <div className="pt-2 border-t border-hairline">
-                <span className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">
-                  Key Improvement:
+                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
+                  Key Focus:
                 </span>
-                <p className="mt-1 text-[13px] font-medium leading-relaxed text-terracotta">
+                <p className="mt-0.5 text-[12.5px] font-medium leading-relaxed text-terracotta">
                   “{activeSession.improvement}”
                 </p>
               </div>
 
               {activeSession.keywords && activeSession.keywords.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-2">
+                <div className="flex flex-wrap gap-1 pt-1.5">
                   {activeSession.keywords.map((kw) => (
                     <span
                       key={kw}
-                      className="rounded-full bg-surface-sunken px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground border border-hairline"
+                      className="rounded-full bg-surface-sunken px-2 py-0.5 text-[9.5px] font-medium text-muted-foreground border border-hairline"
                     >
                       #{kw}
                     </span>
@@ -535,9 +558,9 @@ export function HistoryScreen({
             <button
               type="button"
               onClick={onOpenNote}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-terracotta px-4 py-2.5 text-[13px] font-medium text-white transition-all hover:bg-terracotta/90 active:scale-[0.99] cursor-pointer shadow-sm"
+              className="mt-3.5 flex w-full items-center justify-center gap-2 rounded-xl bg-terracotta px-4 py-2 text-[12.5px] font-medium text-white transition-all hover:bg-terracotta/90 active:scale-[0.99] cursor-pointer shadow-xs"
             >
-              <FileText className="size-4" />
+              <FileText className="size-3.5" />
               <span>Open Learning Note</span>
             </button>
           </div>
