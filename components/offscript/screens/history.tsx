@@ -243,17 +243,7 @@ export function HistoryScreen({
                   className="absolute -translate-x-1/2 -translate-y-1/2 transition-transform duration-300"
                   style={{ left: `${pt.x}px`, top: `${pt.y}px` }}
                 >
-                  {/* Soft animated gradient glow aura on hover */}
-                  {isHovered && !isSelected && (
-                    <div className="absolute inset-0 -m-3 rounded-full bg-gradient-to-tr from-terracotta/60 via-sky-400/50 to-indigo-500/60 blur-md pointer-events-none transition-all duration-300 animate-pulse" />
-                  )}
-
-                  {/* Outer pulse aura for selected node */}
-                  {isSelected && (
-                    <div className="absolute inset-0 -m-3 rounded-full animate-ping opacity-25 bg-terracotta" />
-                  )}
-
-                  {/* Circular Node Emblem / Capsule matching reference image */}
+                  {/* Circular Node Emblem */}
                   <div className="relative flex items-center">
                     <button
                       type="button"
@@ -267,18 +257,23 @@ export function HistoryScreen({
                       className={cn(
                         'group relative flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer focus:outline-hidden select-none',
                         isSelected
-                          ? 'size-10 bg-surface-raised border-2 border-terracotta text-terracotta shadow-xl shadow-terracotta/25 scale-125 z-30 ring-4 ring-terracotta/20'
+                          ? 'size-9 bg-gradient-to-tr from-terracotta via-indigo-500 to-sky-400 border-2 border-surface-raised shadow-lg shadow-terracotta/30 scale-125 z-30 ring-4 ring-terracotta/25'
                           : isHovered
-                            ? 'size-10 bg-gradient-to-tr from-terracotta via-sky-400 to-indigo-500 text-white border-2 border-white/80 shadow-lg shadow-terracotta/30 scale-125 z-20'
-                            : 'size-7.5 bg-foreground/20 hover:bg-foreground/30 border border-foreground/15 text-foreground/80 shadow-2xs z-10',
+                            ? 'size-9 bg-gradient-to-tr from-sky-400 via-indigo-500 to-terracotta border-2 border-surface-raised shadow-md scale-125 z-20'
+                            : 'size-7 bg-foreground/25 hover:bg-foreground/40 border border-foreground/10 z-10',
                       )}
                     >
-                      {/* Inner Dot for pellet styling */}
-                      {isSelected ? (
-                        <span className="size-3 rounded-full bg-terracotta shadow-xs" />
-                      ) : (
-                        <span className="size-1.5 rounded-full bg-foreground/50 group-hover:bg-white" />
-                      )}
+                      {/* Inner Dot indicator */}
+                      <span
+                        className={cn(
+                          'rounded-full transition-all duration-300',
+                          isSelected
+                            ? 'size-2.5 bg-white shadow-xs'
+                            : isHovered
+                              ? 'size-2 bg-white'
+                              : 'size-1.5 bg-surface-raised/80',
+                        )}
+                      />
                     </button>
 
                     {/* Active Floating Side Label (like "Patagonian Desert" in reference image) */}
