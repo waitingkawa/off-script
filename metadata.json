@@ -1,0 +1,6 @@
+{
+  "name": "Offscript",
+  "description": "A calm practice space for speaking spontaneous English. Record one attempt, receive high-value coaching points, and speak again without a script.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
