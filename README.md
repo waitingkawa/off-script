@@ -1,33 +1,95 @@
-# offscript
+<p align="center">
+  <img src="docs/readme/offscript-icon.png" width="112" alt="Offscript app icon">
+</p>
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+<h1 align="center">Offscript</h1>
 
-## Built with v0
+<p align="center">
+  A voice-first macOS practice tool for saying one clear thing in English without reading from a script.
+</p>
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+<p align="center">
+  <a href="https://github.com/waitingkawa/off-script/releases/tag/v0.1.0"><strong>Download for macOS</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/waitingkawa/off-script/releases">Release notes</a>
+</p>
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_GI3XcUJY9OrWYtm53jJuuyoJ36II)
+<p align="center">
+  macOS 14+ · Apple Silicon and Intel · Pre-release
+</p>
 
-## Getting Started
+![Offscript topic anchor](docs/readme/topic-anchor.jpg)
 
-First, run the development server:
+## Speak first. Edit second.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+Offscript starts with one question: **What do you want your listener to remember?**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Write a single-sentence anchor, then speak before seeing a transcript. After each attempt, the coach picks one problem worth fixing and asks you to try again. A session lasts three to five minutes and stops after three attempts.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/readme/recording.jpg" alt="Recording an English practice attempt"></td>
+    <td width="50%"><img src="docs/readme/feedback.jpg" alt="One focused coaching point and progressive help"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Speak from a topic anchor and a few keywords.</sub></td>
+    <td align="center"><sub>Fix one thing, then say it again.</sub></td>
+  </tr>
+</table>
 
-## Learn More
+## Help appears only when you ask
 
-To learn more, take a look at the following resources:
+The full rewrite stays folded away. If you get stuck, reveal a hint, a partial example, or the complete version. Offscript records how much help you used so the note reflects what you could say on your own.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/readme/learning-note.jpg" alt="Learning Note created after a practice session"></td>
+    <td width="50%"><img src="docs/readme/history.jpg" alt="Practice history shown as a trail of sessions"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Keep the anchor, outline, improvement, and reusable phrases.</sub></td>
+    <td align="center"><sub>Each dot is one finished three-to-five-minute practice.</sub></td>
+  </tr>
+</table>
+
+## Designed to stay quiet
+
+The interface uses soft geometry, generous space, warm grays, and one muted accent color for recording, the current attempt, and language worth remembering. The screenshots above come from the interaction prototype that guided the native build.
+
+The macOS app keeps the platform behavior intact:
+
+- a menu-bar entry and a separate practice window
+- keyboard controls for starting a session, opening history, and recording
+- local practice history with SwiftData
+- API keys stored in macOS Keychain
+- Markdown export and a reusable prompt for ChatGPT, Claude, or another AI coach
+
+## Install
+
+1. Download [Offscript-0.1.0-macOS.dmg](https://github.com/waitingkawa/off-script/releases/download/v0.1.0/Offscript-0.1.0-macOS.dmg).
+2. Open the disk image and drag Offscript into Applications.
+3. Control-click Offscript and choose **Open** on the first launch. This preview is ad-hoc signed and has not been notarized yet.
+4. Add an OpenAI or Gemini API key in Settings. The key is saved in Keychain, not in the project files.
+
+## Built with
+
+- SwiftUI and native macOS windows
+- SwiftData for sessions and Learning Notes
+- AVFoundation for recording and metering
+- Keychain Services for provider credentials
+- OpenAI or Gemini for transcription and coaching
+
+The web prototype remains a visual and interaction reference. The desktop app does not embed it in a WebView.
+
+## Shortcuts
+
+| Action | Shortcut |
+| --- | --- |
+| New practice | ⌘N |
+| Practice history | ⌘⇧H |
+| Settings | ⌘, |
+| Start or stop recording | ⌥R |
+
+## Privacy
+
+Practice history stays on your Mac. Audio is sent only when you start an AI-assisted attempt, and the temporary local recording is deleted after the provider request finishes. Provider data policies still apply.
